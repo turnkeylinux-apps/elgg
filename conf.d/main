@@ -13,3 +13,13 @@ SRC=/usr/local/src
 WEBROOT=/var/www/elgg
 ELGG_DATA=/var/lib/elgg/data
 
+# unpack and set permissions
+unzip $SRC/elgg-*.zip -d $(dirname $WEBROOT)
+rm $SRC/elgg-*.zip
+mv $(dirname $WEBROOT)/elgg-* $WEBROOT
+chown -R root:root $WEBROOT
+
+# setup elgg data directory
+mkdir -p $ELGG_DATA
+chown -R www-data:www-data $ELGG_DATA
+
