@@ -42,28 +42,27 @@ $MYSQL_BATCH --execute "grant all privileges on $DB_NAME.* to $DB_USER@localhost
 # cli based installation
 chown www-data:www-data $WEBROOT
 chown www-data:www-data $WEBROOT/engine
-INSTALLER=$WEBROOT/install/cli/installer.php
+INSTALLER=$WEBROOT/install/cli/sample_installer.php
 
-cat >$INSTALLER<<EOF
-<?php
-require_once(dirname(dirname(__FILE__)) . "/ElggInstaller.php");
-\$installer = new ElggInstaller();
-\$params = array(
-        'dbuser' => '$DB_USER',
-        'dbpassword' => '$DB_PASS',
-        'dbname' => '$DB_NAME',
-        'sitename' => 'TurnKey Elgg',
-        'siteemail' => '$ADMIN_MAIL',
-        'wwwroot' => 'http://$DOMAIN',
-        'dataroot' => '$ELGG_DATA',
-        'displayname' => 'Administrator',
-        'email' => '$ADMIN_MAIL',
-        'username' => '$ADMIN_NAME',
-        'password' => '$ADMIN_PASS',
-);
-// install and create the .htaccess file
-\$installer->batchInstall(\$params, TRUE);
-EOF
+# database settings
+sed -i "s|'dbuser'.*|'dbuser' => '$DB_USER',|" $INSTALLER
+sed -i "s|'dbpassword'.*|'dbpassword' => '$DB_PASS',|" $INSTALLER
+sed -i "s|'dbname'.*|'dbname' => '$DB_NAME',|" $INSTALLER
+
+# site settings
+sed -i "s|'sitename'.*|'sitename' => 'TurnKey Elgg',|" $INSTALLER
+sed -i "s|'siteemail'.*|'siteemail' => '$ADMIN_MAIL',|" $INSTALLER
+sed -i "s|'wwwroot'.*|'wwwroot' => 'http://$DOMAIN',|" $INSTALLER
+sed -i "s|'dataroot'.*|'dataroot' => '$ELGG_DATA',|" $INSTALLER
+
+# admin settings
+sed -i "s|'displayname'.*|'displayname' => 'Administrator',|" $INSTALLER
+sed -i "s|'email'.*|'email' => '$ADMIN_MAIL',|" $INSTALLER
+sed -i "s|'username'.*|'username' => '$ADMIN_NAME',|" $INSTALLER
+sed -i "s|'password'.*|'password' => '$ADMIN_PASS',|" $INSTALLER
+
+sed -i "s|\$enabled = false;|\$enabled = true;|" $INSTALLER
+
 php5 $INSTALLER
 rm $INSTALLER
 

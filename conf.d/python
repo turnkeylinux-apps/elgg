@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+pip install python-bcrypt
+
+echo "y" | apt-get purge python-dev-all
+echo "y" | apt-get purge python-pip

@@ -10,9 +10,7 @@ Option:
 
 import sys
 import getopt
-import hashlib
-import random
-import string
+import bcrypt
 
 from dialog_wrapper import Dialog
 from mysqlconf import MySQL
@@ -77,12 +75,12 @@ def main():
     if not domain.startswith("http://"):
         domain = "http://%s/" % domain
 
-    salt = "".join(random.choice(string.letters) for line in range(8))
-    hashpass = hashlib.md5(password + salt).hexdigest()
+    salt = bcrypt.gensalt(10) 
+    hashpass = bcrypt.hashpw(password, salt)
 
     m = MySQL()
-    m.execute('UPDATE elgg.elgg_users_entity SET salt=\"%s\" WHERE username=\"admin\";' % salt)
-    m.execute('UPDATE elgg.elgg_users_entity SET password=\"%s\" WHERE username=\"admin\";' % hashpass)
+    m.execute('UPDATE elgg.elgg_users_entity SET password_hash=\"%s\" WHERE username=\"admin\";' % hashpass)
+
     m.execute('UPDATE elgg.elgg_users_entity SET email=\"%s\" WHERE username=\"admin\";' % email)
 
     m.execute('UPDATE elgg.elgg_metastrings SET string=\"%s\" WHERE string LIKE \"%%@%%\";' % email)
