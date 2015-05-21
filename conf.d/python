@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-pip install python-bcrypt
-
-echo "y" | apt-get purge python-dev
-echo "y" | apt-get purge python-pip
-echo "y" | apt-get purge build-essential

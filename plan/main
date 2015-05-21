@@ -9,6 +9,4 @@ php-pear
 
 unzip
 
-build-essential
-python-dev
-python-pip
+python-bcrypt

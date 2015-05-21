@@ -24,7 +24,7 @@ mkdir -p $ELGG_DATA
 chown -R www-data:www-data $ELGG_DATA
 
 # configure apache
-a2dissite default
+a2dissite 000-default
 a2ensite elgg
 a2enmod rewrite
 
