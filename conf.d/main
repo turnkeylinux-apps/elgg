@@ -52,7 +52,7 @@ sed -i "s|'dbname'.*|'dbname' => '$DB_NAME',|" $INSTALLER
 # site settings
 sed -i "s|'sitename'.*|'sitename' => 'TurnKey Elgg',|" $INSTALLER
 sed -i "s|'siteemail'.*|'siteemail' => '$ADMIN_MAIL',|" $INSTALLER
-sed -i "s|'wwwroot'.*|'wwwroot' => 'http://$DOMAIN',|" $INSTALLER
+sed -i "s|'wwwroot'.*|'wwwroot' => 'https://$DOMAIN',|" $INSTALLER
 sed -i "s|'dataroot'.*|'dataroot' => '$ELGG_DATA',|" $INSTALLER
 
 # admin settings
