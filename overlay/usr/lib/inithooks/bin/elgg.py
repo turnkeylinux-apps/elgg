@@ -11,6 +11,7 @@ Option:
 import sys
 import getopt
 import inithooks_cache
+
 import bcrypt
 
 from dialog_wrapper import Dialog
@@ -73,6 +74,8 @@ def main():
 
     if domain == "DEFAULT":
         domain = DEFAULT_DOMAIN
+
+    inithooks_cache.write('APP_DOMAIN', domain)
 
     domain = domain.strip("/")
     if not domain.startswith("http://"):
