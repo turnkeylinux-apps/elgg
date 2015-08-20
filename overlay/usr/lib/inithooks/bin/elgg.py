@@ -10,6 +10,7 @@ Option:
 
 import sys
 import getopt
+import inithooks_cache
 import bcrypt
 
 from dialog_wrapper import Dialog
@@ -58,6 +59,8 @@ def main():
             "Elgg Email",
             "Enter email address for the Elgg 'admin' account.",
             "admin@example.com")
+
+    inithooks_cache.write('APP_EMAIL', email)
 
     if not domain:
         if 'd' not in locals():
