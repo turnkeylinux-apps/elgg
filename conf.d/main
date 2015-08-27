@@ -52,7 +52,7 @@ sed -i "s|'dbname'.*|'dbname' => '$DB_NAME',|" $INSTALLER
 # site settings
 sed -i "s|'sitename'.*|'sitename' => 'TurnKey Elgg',|" $INSTALLER
 sed -i "s|'siteemail'.*|'siteemail' => '$ADMIN_MAIL',|" $INSTALLER
-sed -i "s|'wwwroot'.*|'wwwroot' => 'http://$DOMAIN',|" $INSTALLER
+sed -i "s|'wwwroot'.*|'wwwroot' => 'https://$DOMAIN',|" $INSTALLER
 sed -i "s|'dataroot'.*|'dataroot' => '$ELGG_DATA',|" $INSTALLER
 
 # admin settings
@@ -70,6 +70,20 @@ chown root:root $WEBROOT
 chown root:root $WEBROOT/engine
 chown www-data:www-data $WEBROOT/engine/settings.php
 chmod 640 $WEBROOT/engine/settings.php
+
+# add TurnKey credit
+
+sed -i "s|^ \\+\\(elgg_register_ajax_view('navigation/menu/user_hover/contents');\\)$|\
+        elgg_register_menu_item('footer', \\ElggMenuItem::factory(array(\n\
+                'name' => 'tklpowered',\n\
+                'text' => 'Powered by TurnKey Linux',\n\
+                'href' => 'http://turnkeylinux.org',\n\
+                'title' => 'TurnKey Linux',\n\
+                'section' => 'meta',\n\
+        )));\n\
+\n\
+        \1|" \
+$WEBROOT/engine/lib/navigation.php
 
 # stop services
 /etc/init.d/mysql stop
