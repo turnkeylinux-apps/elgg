@@ -90,7 +90,7 @@ def main():
     m.execute('UPDATE elgg.elgg_users_entity SET email=\"%s\" WHERE username=\"admin\";' % email)
 
     m.execute('UPDATE elgg.elgg_metastrings SET string=\"%s\" WHERE string LIKE \"%%@%%\";' % email)
-    m.execute('UPDATE elgg.elgg_sites_entity SET url=\"%s\" WHERE url LIKE \"http://%%\";' % domain)
+    m.execute('UPDATE elgg.elgg_sites_entity SET url=\"%s\" WHERE guid = 1;' % domain)
 
 if __name__ == "__main__":
     main()
