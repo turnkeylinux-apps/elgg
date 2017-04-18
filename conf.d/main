@@ -44,6 +44,7 @@ chown www-data:www-data $WEBROOT
 chown www-data:www-data $WEBROOT/engine
 INSTALLER=$WEBROOT/install/cli/sample_installer.php
 
+
 # database settings
 sed -i "s|'dbuser'.*|'dbuser' => '$DB_USER',|" $INSTALLER
 sed -i "s|'dbpassword'.*|'dbpassword' => '$DB_PASS',|" $INSTALLER

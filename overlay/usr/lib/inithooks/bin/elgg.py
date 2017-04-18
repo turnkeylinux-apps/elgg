@@ -69,7 +69,7 @@ def main():
 
         domain = d.get_input(
             "Elgg Domain",
-            "Enter the domain to serve Elgg.",
+            "Enter the domain to serve Elgg. Note: Elgg does not support http without further configuration, domain will default to https.",
             DEFAULT_DOMAIN)
 
     if domain == "DEFAULT":
@@ -78,8 +78,8 @@ def main():
     inithooks_cache.write('APP_DOMAIN', domain)
 
     domain = domain.strip("/")
-    if not domain.startswith("http://"):
-        domain = "http://%s/" % domain
+    if not (domain.startswith("http://") or domain.startswith('https://')):
+        domain = "https://%s/" % domain
 
     salt = bcrypt.gensalt(10) 
     hashpass = bcrypt.hashpw(password, salt)
