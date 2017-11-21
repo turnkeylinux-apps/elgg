@@ -11,6 +11,9 @@ DOMAIN=www.example.com
 
 SRC=/usr/local/src
 WEBROOT=/var/www/elgg
+
+ELGG_ROOT=/var/www/elgg/vendor/elgg/elgg
+
 ELGG_DATA=/var/lib/elgg/data
 
 # unpack and set permissions
@@ -29,8 +32,8 @@ a2ensite elgg
 a2enmod rewrite
 
 # start services
-/etc/init.d/mysql start
-/etc/init.d/apache2 start
+service mysql start
+service apache2 start
 
 # setup the database
 MYSQL_BATCH="mysql --user=root --password=$MYSQL_PASS --batch"
@@ -40,10 +43,10 @@ $MYSQL_ADMIN create $DB_NAME
 $MYSQL_BATCH --execute "grant all privileges on $DB_NAME.* to $DB_USER@localhost identified by '$DB_PASS'; flush privileges;"
 
 # cli based installation
-chown www-data:www-data $WEBROOT
-chown www-data:www-data $WEBROOT/engine
-INSTALLER=$WEBROOT/install/cli/sample_installer.php
-
+rm $WEBROOT/.htaccess
+chown -R www-data:www-data $WEBROOT
+chown -R www-data:www-data $ELGG_DATA
+INSTALLER=$ELGG_ROOT/install/cli/sample_installer.php
 
 # database settings
 sed -i "s|'dbuser'.*|'dbuser' => '$DB_USER',|" $INSTALLER
@@ -64,13 +67,12 @@ sed -i "s|'password'.*|'password' => '$ADMIN_PASS',|" $INSTALLER
 
 sed -i "s|\$enabled = false;|\$enabled = true;|" $INSTALLER
 
-php5 $INSTALLER
+su -s /bin/sh -c "php $INSTALLER"
 rm $INSTALLER
 
-chown root:root $WEBROOT
-chown root:root $WEBROOT/engine
-chown www-data:www-data $WEBROOT/engine/settings.php
-chmod 640 $WEBROOT/engine/settings.php
+chown -R root:root $WEBROOT
+chown -R root:root $ELGG_ROOT
+chmod 644 $WEBROOT/elgg-config/settings.php
 
 # add TurnKey credit
 
@@ -84,9 +86,9 @@ sed -i "s|^ \\+\\(elgg_register_ajax_view('navigation/menu/user_hover/contents')
         )));\n\
 \n\
         \1|" \
-$WEBROOT/engine/lib/navigation.php
+$ELGG_ROOT/engine/lib/navigation.php
 
 # stop services
-/etc/init.d/mysql stop
-/etc/init.d/apache2 stop
+service mysql stop
+service apache2 stop
 
