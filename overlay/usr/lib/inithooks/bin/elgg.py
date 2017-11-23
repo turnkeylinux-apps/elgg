@@ -8,6 +8,7 @@ Option:
                 DEFAULT=www.example.com
 """
 
+import re
 import sys
 import getopt
 import inithooks_cache
@@ -91,6 +92,15 @@ def main():
 
     m.execute('UPDATE elgg.elgg_metastrings SET string=\"%s\" WHERE string LIKE \"%%@%%\";' % email)
     m.execute('UPDATE elgg.elgg_sites_entity SET url=\"%s\" WHERE guid = 1;' % domain)
+
+    with open('/etc/cron.d/elgg', 'r') as fob:
+        contents = fob.read()
+
+    contents = re.sub("ELGG='.*'", "ELGG='%s'" % domain)
+
+    with open('/etc/cron.d/elgg', 'w') as fob:
+        fob.write(contents)
+        
 
 if __name__ == "__main__":
     main()
