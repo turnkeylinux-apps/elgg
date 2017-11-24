@@ -9,4 +9,6 @@ php-pear
 
 unzip
 
+libwww-perl
+
 python-bcrypt
