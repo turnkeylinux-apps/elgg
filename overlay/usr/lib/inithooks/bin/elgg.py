@@ -96,11 +96,21 @@ def main():
     with open('/etc/cron.d/elgg', 'r') as fob:
         contents = fob.read()
 
-    contents = re.sub("ELGG='.*'", "ELGG='%s'" % domain)
+    contents = re.sub("ELGG='.*'", "ELGG='%s'" % domain, contents)
 
     with open('/etc/cron.d/elgg', 'w') as fob:
         fob.write(contents)
-        
+
+    htaccess_rules = "######### Turnkey overlay: redirect to domain ######### \n" 
+    htaccess_rules = htaccess_rules + "RewriteEngine On \n" 
+    htaccess_rules = htaccess_rules + "RewriteCond %{HTTP_HOST} !.*" + domain.replace('https://', '').replace('http://','').replace('.','\\.').replace('/','') + "$ [NC] \n"
+    htaccess_rules = htaccess_rules + "RewriteRule ^(.*)$ " + domain + "$1 [R=301,L] \n"
+    htaccess_rules = htaccess_rules + "####################################################### \n\n"
+    
+    with open('/var/www/elgg/.htaccess', 'r+') as f:
+        content = f.read()
+        f.seek(0, 0)
+        f.write(htaccess_rules + content)        
 
 if __name__ == "__main__":
     main()
