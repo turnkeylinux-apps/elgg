@@ -78,10 +78,6 @@ def main():
 
     inithooks_cache.write('APP_DOMAIN', domain)
 
-    domain = domain.strip("/")
-    if not (domain.startswith("http://") or domain.startswith('https://')):
-        domain = "https://%s/" % domain
-
     salt = bcrypt.gensalt(10) 
     hashpass = bcrypt.hashpw(password, salt)
 
@@ -101,17 +97,10 @@ def main():
     with open('/etc/cron.d/elgg', 'w') as fob:
         fob.write(contents)
 
-    htaccess_rules = "######### Turnkey overlay: redirect to domain ######### \n"
-    htaccess_rules = htaccess_rules + "RewriteEngine On \n"
-    htaccess_rules = htaccess_rules + "RewriteCond %{HTTP_HOST} !.*" + domain.replace('https://', '').replace('http://','').replace('.','\\.').replace('/','') + "$ [NC] \n"
-    htaccess_rules = htaccess_rules + "RewriteRule ^(.*)$ " + domain + "$1 [R=301,L] \n"
-    htaccess_rules = htaccess_rules + "####################################################### \n\n"
+    apache_conf = "/etc/apache2/sites-available/elgg.conf"
+    system("sed -i \"\|RewriteRule|s|https://.*|https://%s/\$1 [R,L]|\" %s" % (domain, apache_conf))
 
-    with open('/var/www/elgg/.htaccess', 'r+') as f:
-        content = f.read()
-        f.seek(0, 0)
-        f.write(htaccess_rules + content)
+    system("service apache2 restart")
 
 if __name__ == "__main__":
     main()
-
