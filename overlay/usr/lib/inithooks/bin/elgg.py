@@ -17,6 +17,7 @@ import bcrypt
 
 from dialog_wrapper import Dialog
 from mysqlconf import MySQL
+from executil import system
 
 def usage(s=None):
     if s:
@@ -76,7 +77,11 @@ def main():
     if domain == "DEFAULT":
         domain = DEFAULT_DOMAIN
 
-    inithooks_cache.write('APP_DOMAIN', domain)
+    fqdn = re.compile(r"https?://")
+    fqdn = fqdn.sub('', domain).strip('/')
+    domain = "https://%s/" % fqdn
+
+    inithooks_cache.write('APP_DOMAIN', fqdn)
 
     salt = bcrypt.gensalt(10) 
     hashpass = bcrypt.hashpw(password, salt)
@@ -98,7 +103,7 @@ def main():
         fob.write(contents)
 
     apache_conf = "/etc/apache2/sites-available/elgg.conf"
-    system("sed -i \"\|RewriteRule|s|https://.*|https://%s/\$1 [R,L]|\" %s" % (domain, apache_conf))
+    system("sed -i \"\|RewriteRule|s|https://.*|https://%s/\$1 [R,L]|\" %s" % (fqdn, apache_conf))
 
     system("service apache2 restart")
 
