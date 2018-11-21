@@ -9,6 +9,9 @@ turnkey-elgg-15.1 (1) turnkey; urgency=low
   * Update buildcode to always download latest release.
     [ Jeremy Davis ]
 
+  * Rebuild to resolve inadvertant removal of mariadb during sec-updates
+    - part of #1246.
+
  -- Stefan Davis <stefan@turnkeylinux.org>  Wed, 21 Nov 2018 03:08:45 +1000
 
 turnkey-elgg-15.0 (1) turnkey; urgency=low
