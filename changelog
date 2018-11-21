@@ -1,3 +1,9 @@
+turnkey-elgg-15.1 (1) turnkey; urgency=low
+
+  * Updated to Stable version of Elgg (2.3.9)
+
+ -- Stefan Davis <stefan@turnkeylinux.org>  Wed, 21 Nov 2018 03:08:45 +1000
+
 turnkey-elgg-15.0 (1) turnkey; urgency=low
 
   * Updated to Stable version of Elgg (2.3.7).
