@@ -104,7 +104,7 @@ def main():
 
     apache_conf = "/etc/apache2/sites-available/elgg.conf"
     system("sed -i \"\|RewriteRule|s|https://.*|https://%s/\$1 [R,L]|\" %s" % (fqdn, apache_conf))
-
+    system("sed -i \"\|RewriteCond|s|!^.*|!^%s$|\" %s" % (fqdn, apache_conf))
     system("service apache2 restart")
 
 if __name__ == "__main__":
