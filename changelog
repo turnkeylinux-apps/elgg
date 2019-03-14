@@ -1,3 +1,11 @@
+turnkey-elgg-15.2 (1) turnkey; urgency=low
+
+  * Updated to latest stable version of Elgg - v2.3.10.
+
+  * Include Elgg data directory in default TKLBAM profile - closes #1309.
+
+ -- Jeremy Davis <jeremy@turnkeylinux.org>  Fri, 15 Mar 2019 06:56:02 +1100
+
 turnkey-elgg-15.1 (1) turnkey; urgency=low
 
   * Updated to Stable version of Elgg (2.3.9)
