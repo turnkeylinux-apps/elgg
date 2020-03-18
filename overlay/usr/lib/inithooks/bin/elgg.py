@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 """Set Elgg admin password, email and domain to serve
 
 Option:
@@ -17,13 +17,13 @@ import bcrypt
 
 from dialog_wrapper import Dialog
 from mysqlconf import MySQL
-from executil import system
+import subprocess
 
 def usage(s=None):
     if s:
-        print >> sys.stderr, "Error:", s
-    print >> sys.stderr, "Syntax: %s [options]" % sys.argv[0]
-    print >> sys.stderr, __doc__
+        print("Error:", s, file=sys.stderr)
+    print("Syntax: %s [options]" % sys.argv[0], file=sys.stderr)
+    print(__doc__, file=sys.stderr)
     sys.exit(1)
 
 DEFAULT_DOMAIN="www.example.com"
@@ -32,7 +32,7 @@ def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "h",
                                        ['help', 'pass=', 'email=', 'domain='])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e)
 
     email = ""
@@ -79,20 +79,35 @@ def main():
 
     fqdn = re.compile(r"https?://")
     fqdn = fqdn.sub('', domain).strip('/')
-    domain = "https://%s/" % fqdn
+    domain = ("https://%s/" % fqdn)
 
     inithooks_cache.write('APP_DOMAIN', fqdn)
 
     salt = bcrypt.gensalt(10) 
-    hashpass = bcrypt.hashpw(password, salt)
+    hashpass = bcrypt.hashpw(password.encode('utf8'), salt)
 
     m = MySQL()
-    m.execute('UPDATE elgg.elgg_users_entity SET password_hash=\"%s\" WHERE username=\"admin\";' % hashpass)
 
-    m.execute('UPDATE elgg.elgg_users_entity SET email=\"%s\" WHERE username=\"admin\";' % email)
-
-    m.execute('UPDATE elgg.elgg_metastrings SET string=\"%s\" WHERE string LIKE \"%%@%%\";' % email)
-    m.execute('UPDATE elgg.elgg_sites_entity SET url=\"%s\" WHERE guid = 1;' % domain)
+    try:
+        with m.connection.cursor() as cursor:
+            cursor.execute('SELECT guid FROM elgg.elgg_entities WHERE type="user" AND owner_guid="0"')
+            admin_guid = cursor.fetchone()['guid']
+            cursor.execute('SELECT name FROM elgg.elgg_metadata WHERE entity_guid=%s', (admin_guid,))
+            assert(cursor.fetchone()['name'])
+            # sanity check, if this fails, look at the database. You'll probably need to update
+            # all of this database stuff
+            cursor.execute(
+                'UPDATE elgg.elgg_metadata SET value=%s WHERE entity_guid=%s AND name="password_hash"',
+                (hashpass, admin_guid,))
+            cursor.execute(
+                'UPDATE elgg.elgg_metadata SET value=%s WHERE entity_guid=%s AND name="email"',
+                (email, admin_guid,))
+            cursor.execute(
+                'UPDATE elgg.elgg_metadata SET value=%s WHERE entity_guid=1 AND name="email"',
+                (email,))
+            m.connection.commit()
+    finally:
+        m.connection.close()
 
     with open('/etc/cron.d/elgg', 'r') as fob:
         contents = fob.read()
@@ -103,9 +118,9 @@ def main():
         fob.write(contents)
 
     apache_conf = "/etc/apache2/sites-available/elgg.conf"
-    system("sed -i \"\|RewriteRule|s|https://.*|https://%s/\$1 [R,L]|\" %s" % (fqdn, apache_conf))
-    system("sed -i \"\|RewriteCond|s|!^.*|!^%s$|\" %s" % (fqdn, apache_conf))
-    system("service apache2 restart")
+    subprocess.run(["sed", "-i", "\|RewriteRule|s|https://.*|https://%s/\$1 [R,L]|" % fqdn, apache_conf])
+    subprocess.run(["sed", "-i", "\|RewriteCond|s|!^.*|!^%s$|" % fqdn, apache_conf])
+    subprocess.run(["service", "apache2", "restart"])
 
 if __name__ == "__main__":
     main()

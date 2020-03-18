@@ -1,5 +1,8 @@
 #!/bin/sh -ex
 
+apt update
+apt install --assume-yes python3-bcrypt
+
 DB_NAME=elgg
 DB_USER=elgg
 DB_PASS=$(mcookie)
