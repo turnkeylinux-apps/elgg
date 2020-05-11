@@ -19,7 +19,7 @@ turnkey-elgg-16.0 (1) turnkey; urgency=low
   * Note: Please refer to turnkey-core's changelog for changes common to all
     appliances. Here we only describe changes specific to this appliance.
 
- -- Stefan Davis <stefan@turnkeylinux.org>  Wed, 11 May 2020 14:34:29 +1000
+ -- Stefan Davis <stefan@turnkeylinux.org>  Mon, 11 May 2020 14:34:29 +1000
 
 turnkey-elgg-15.2 (1) turnkey; urgency=low
 
