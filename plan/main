@@ -6,9 +6,10 @@ php-cli
 php-curl
 php-soap
 php-pear
+php-mbstring
 
 unzip
 
 libwww-perl
 
-python-bcrypt
+python3-bcrypt
