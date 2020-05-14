@@ -117,6 +117,9 @@ def main():
     with open('/etc/cron.d/elgg', 'w') as fob:
         fob.write(contents)
 
+    elgg_conf = "/var/www/elgg/elgg-config/settings.php"
+    subprocess.run(["sed", "-i", '\|^\$CONFIG->wwwroot|s|=.*|= "%s";|' % domain.strip('/'), elgg_conf])
+
     apache_conf = "/etc/apache2/sites-available/elgg.conf"
     subprocess.run(["sed", "-i", "\|RewriteRule|s|https://.*|https://%s/\$1 [R,L]|" % fqdn, apache_conf])
     subprocess.run(["sed", "-i", "\|RewriteCond|s|!^.*|!^%s$|" % fqdn, apache_conf])
