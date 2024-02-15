@@ -1,0 +1,53 @@
+#!/bin/bash -e
+
+# fallback defaults - adjust as desired
+USER_FALLBACK=www-data
+WEBROOT_FALLBACK=/var/www/elgg
+CLI_FALLBACK="$WEBROOT_FALLBACK/vendor/bin/elgg-cli"
+
+export ELGG_USER="${ELGG_USER:-$USER_FALLBACK}"
+export ELGG_WEBROOT="${ELGG_WEBROOT:-$WEBROOT_FALLBACK}"
+export ELGG_CLI="${ELGG_CLI:-$CLI_FALLBACK}"
+
+fatal() { echo "FATAL: $@" >&2; exit 1; }
+
+[[ -z "$DEBUG" ]] || set -x
+[[ "$(id -u)" -eq 0 ]] \
+    || fatal "$(basename $0) must be run as root, please re-run with sudo"
+
+if [[ -z "$ELGG_USER" ]]; then
+    fatal "Elgg user: $ELGG_USER does not exist"
+fi
+if [[ ! -d "$ELGG_WEBROOT" ]]; then
+    fatal "Elgg webroot dir: $ELGG_WEBROOT not found"
+fi
+if [[ ! -x "$ELGG_CLI" ]]; then
+    fatal "Elgg CLI: $ELGG_CLI not found"
+fi
+
+if [[ "$1" == '-h' ]] || [[ "$1" == '--help' ]]; then
+    cat <<EOF
+Syntax $(basename $0) [-h|--help] <elgg_command>
+
+Run <elgg_command> as an alternate user, in the pre-defined webroot.
+
+E.g.:   $(basename $0) help
+
+To adjust defaults, please edit the "fallback defaults" at the top of this
+script. You can find it at '$(realpath $0)'
+
+Env vars::
+----------
+
+    ELGG_USER           User to run commands as
+                        Default: $ELGG_USER
+    ELGG_WEBROOT        Home directory to use when running Elgg CLI
+                        Default: $ELGG_WEBROOT
+    ELGG_CLI            Elgg CLI path
+                        Default: $ELGG_CLI
+    DEBUG               Set to enable verbose output - useful for debugging
+EOF
+    exit 1
+fi
+
+runuser $ELGG_USER -s /bin/bash -c "$ELGG_CLI $(printf '%q ' "$@")"
