@@ -9,11 +9,11 @@ export ELGG_USER="${ELGG_USER:-$USER_FALLBACK}"
 export ELGG_WEBROOT="${ELGG_WEBROOT:-$WEBROOT_FALLBACK}"
 export ELGG_CLI="${ELGG_CLI:-$CLI_FALLBACK}"
 
-fatal() { echo "FATAL: $@" >&2; exit 1; }
+fatal() { echo "FATAL: $*" >&2; exit 1; }
 
 [[ -z "$DEBUG" ]] || set -x
 [[ "$(id -u)" -eq 0 ]] \
-    || fatal "$(basename $0) must be run as root, please re-run with sudo"
+    || fatal "$(basename "$0") must be run as root, please re-run with sudo"
 
 if [[ -z "$ELGG_USER" ]]; then
     fatal "Elgg user: $ELGG_USER does not exist"
@@ -27,14 +27,14 @@ fi
 
 if [[ "$1" == '-h' ]] || [[ "$1" == '--help' ]]; then
     cat <<EOF
-Syntax $(basename $0) [-h|--help] <elgg_command>
+Syntax $(basename "$0") [-h|--help] <elgg_command>
 
 Run <elgg_command> as an alternate user, in the pre-defined webroot.
 
-E.g.:   $(basename $0) help
+E.g.:   $(basename "$0") help
 
 To adjust defaults, please edit the "fallback defaults" at the top of this
-script. You can find it at '$(realpath $0)'
+script. You can find it at '$(realpath "$0")'
 
 Env vars::
 ----------
@@ -50,4 +50,4 @@ EOF
     exit 1
 fi
 
-runuser $ELGG_USER -s /bin/bash -c "$ELGG_CLI $(printf '%q ' "$@")"
+runuser "$ELGG_USER" -s /bin/bash -c "$ELGG_CLI $(printf '%q ' "$@")"

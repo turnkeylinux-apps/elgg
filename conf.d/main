@@ -4,10 +4,10 @@ DB_NAME=elgg
 DB_USER=elgg
 DB_PASS=$(mcookie)
 
-ADMIN_NAME=admin
-ADMIN_PASS=turnkey
-ADMIN_MAIL=admin@example.com
-DOMAIN=www.example.com
+ADMIN_NAME="admin"
+ADMIN_PASS="turnkey"
+ADMIN_MAIL="admin@example.com"
+DOMAIN="www.example.com"
 
 WEBROOT=/var/www/elgg
 ELGG_DATA=$(dirname $WEBROOT)/elgg-data
@@ -21,27 +21,25 @@ ELGG_CONF=$ELGG_ROOT/elgg-config/settings.php
 #mv $(dirname $WEBROOT)/elgg-* $WEBROOT
 #chown -R root:root $WEBROOT
 
-mkdir -p $ELGG_DATA
-mkdir -p $(dirname $WEBROOT)/.composer
-chown -R $(dirname $WEBROOT)
+mkdir -p "$ELGG_DATA"
+mkdir -p "$(dirname "$WEBROOT")"/.composer
+chown -R "$(dirname "$WEBROOT")"
 
 turnkey-composer create-project elgg/starter-project:dev-master $WEBROOT
 cd $WEBROOT
 turnkey-composer install
 turnkey-composer install # 2nd run is req'd apparently...
 
-cp $ELGG_ROOT/vendor/elgg/elgg/elgg-config/settings.example.php $ELGG_CONF
-sed -i "s|{{timezone}}|UTC|" $ELGG_CONF
-sed -i "s|{{dataroot}}|$ELGG_DATA|" $ELGG_CONF
-sed -i "s|{{wwwroot}}|https://$DOMAIN/|" $ELGG_CONF
-sed -i "s|{{dbuser}}|$DB_USER|" $ELGG_CONF
-sed -i "s|{{dbpassword}}|$DB_PASS|" $ELGG_CONF
-sed -i "s|{{dbname}}||" $ELGG_CONF
-sed -i "s|{{dbhost}}|localhost|" $ELGG_CONF
-sed -i "s|{{dbport}}|3306|" $ELGG_CONF
-sed -i "s|{{dbprefix}}|elgg_|" $ELGG_CONF
-
-
+cp "$ELGG_ROOT"/vendor/elgg/elgg/elgg-config/settings.example.php "$ELGG_CONF"
+sed -i "s|{{timezone}}|UTC|" "$ELGG_CONF"
+sed -i "s|{{dataroot}}|$ELGG_DATA|" "$ELGG_CONF"
+sed -i "s|{{wwwroot}}|https://$DOMAIN/|" "$ELGG_CONF"
+sed -i "s|{{dbuser}}|$DB_USER|" "$ELGG_CONF"
+sed -i "s|{{dbpassword}}|$DB_PASS|" "$ELGG_CONF"
+sed -i "s|{{dbname}}|$DB_NAME|" "$ELGG_CONF"
+sed -i "s|{{dbhost}}|localhost|" "$ELGG_CONF"
+sed -i "s|{{dbport}}|3306|" "$ELGG_CONF"
+sed -i "s|{{dbprefix}}|elgg_|" "$ELGG_CONF"
 
 # configure apache
 a2dissite 000-default
@@ -61,16 +59,15 @@ mysqladmin  create $DB_NAME
 $MYSQL_BATCH "grant all privileges on $DB_NAME.* to $DB_USER@localhost identified by '$DB_PASS'; flush privileges;"
 $MYSQL_BATCH "INSTALL SONAME 'ha_archive';"
 
+exit 1
+
 # cli based installation
+turnkey-elgg-cli install --config "$ELGG_CONF"
+
 #rm $WEBROOT/.htaccess
 #chown -R www-data:www-data $WEBROOT
 #chown -R www-data:www-data $ELGG_DATA
 #INSTALLER=$ELGG_ROOT/install/cli/sample_installer.php
-
-# database settings
-#sed -i "s|'dbuser'.*|'dbuser' => '$DB_USER',|" $INSTALLER
-#sed -i "s|'dbpassword'.*|'dbpassword' => '$DB_PASS',|" $INSTALLER
-#sed -i "s|'dbname'.*|'dbname' => '$DB_NAME',|" $INSTALLER
 
 # site settings
 #sed -i "s|'sitename'.*|'sitename' => 'TurnKey Elgg',|" $INSTALLER
@@ -101,13 +98,13 @@ sed -i "s|^ \\+\\(elgg_register_ajax_view('navigation/menu/user_hover/contents')
         elgg_register_menu_item('footer', \\ElggMenuItem::factory(array(\n\
                 'name' => 'tklpowered',\n\
                 'text' => 'Powered by TurnKey Linux',\n\
-                'href' => 'http://turnkeylinux.org',\n\
+                'href' => 'https://turnkeylinux.org',\n\
                 'title' => 'TurnKey Linux',\n\
                 'section' => 'meta',\n\
         )));\n\
 \n\
         \1|" \
-$ELGG_ROOT/engine/lib/navigation.php
+"$ELGG_ROOT"/engine/lib/navigation.php
 
 # stop services
 service mysql stop
