@@ -8,7 +8,6 @@ Option:
                 DEFAULT=www.example.com
 """
 
-import re
 import sys
 import getopt
 from libinithooks import inithooks_cache
@@ -77,11 +76,27 @@ def main():
     if domain == "DEFAULT":
         domain = DEFAULT_DOMAIN
 
-    fqdn = re.compile(r"https?://")
-    fqdn = fqdn.sub('', domain).strip('/')
-    domain = ("https://%s/" % fqdn)
+    if domain.startswith('http') and '://' in domain:
+        if domain.startswith('https'):
+            domain = domain[8:]
+        else:
+            domain = domain[7:]
+    if domain.endswith('/'):
+        domain = domain[:-1]
 
-    inithooks_cache.write('APP_DOMAIN', fqdn)
+    inithooks_cache.write('APP_DOMAIN', domain)
+
+    subprocess.run(["sed", "-i",
+                    f'\|^$CONFIG->wwwroot|s|=.*|= "https://{domain}/";|',
+                    '/var/www/elgg/elgg-config/settings.php'])
+
+    apache_conf = "/etc/apache2/sites-available/elgg.conf"
+    subprocess.run(["sed", "-i",
+                    f"\|RewriteRule|s|https://.*|https://{domain}/\$1 [R,L]|",
+                    apache_conf])
+    subprocess.run(["sed", "-i", f"\|RewriteCond|s|!^.*|!^{domain}$|",
+                    apache_conf])
+    subprocess.run(["service", "apache2", "restart"])
 
     salt = bcrypt.gensalt(10) 
     hashpass = bcrypt.hashpw(password.encode('utf8'), salt)
@@ -108,22 +123,6 @@ def main():
             m.connection.commit()
     finally:
         m.connection.close()
-
-    with open('/etc/cron.d/elgg', 'r') as fob:
-        contents = fob.read()
-
-    contents = re.sub("ELGG='.*'", "ELGG='%s'" % domain, contents)
-
-    with open('/etc/cron.d/elgg', 'w') as fob:
-        fob.write(contents)
-
-    elgg_conf = "/var/www/elgg/elgg-config/settings.php"
-    subprocess.run(["sed", "-i", '\|^\$CONFIG->wwwroot|s|=.*|= "%s";|' % domain.strip('/'), elgg_conf])
-
-    apache_conf = "/etc/apache2/sites-available/elgg.conf"
-    subprocess.run(["sed", "-i", "\|RewriteRule|s|https://.*|https://%s/\$1 [R,L]|" % fqdn, apache_conf])
-    subprocess.run(["sed", "-i", "\|RewriteCond|s|!^.*|!^%s$|" % fqdn, apache_conf])
-    subprocess.run(["service", "apache2", "restart"])
 
 if __name__ == "__main__":
     main()
