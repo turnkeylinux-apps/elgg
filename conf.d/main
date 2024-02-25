@@ -6,40 +6,48 @@ DB_PASS=$(mcookie)
 
 ADMIN_NAME="admin"
 ADMIN_PASS="turnkey"
-ADMIN_MAIL="admin@example.com"
+ADMIN_EMAIL="admin@example.com"
 DOMAIN="www.example.com"
 
 WEBROOT=/var/www/elgg
 ELGG_DATA=$(dirname $WEBROOT)/elgg-data
 
-#ELGG_CONF_EX=$ELGG_ROOT/vendor/elgg/elgg/elgg-config/settings.example.php
-ELGG_CONF=$ELGG_ROOT/elgg-config/settings.php
-
-# unpack and set permissions
-#unzip $SRC/elgg-*.zip -d $(dirname $WEBROOT)
-#rm $SRC/elgg-*.zip
-#mv $(dirname $WEBROOT)/elgg-* $WEBROOT
-#chown -R root:root $WEBROOT
 
 mkdir -p "$ELGG_DATA"
 mkdir -p "$(dirname "$WEBROOT")"/.composer
-chown -R "$(dirname "$WEBROOT")"
+chown -R www-data:www-data "$(dirname "$WEBROOT")"
 
-turnkey-composer create-project elgg/starter-project:dev-master $WEBROOT
-cd $WEBROOT
+if [[ -n "$FAB_HTTP_PROXY" ]]; then
+    export http_proxy="$FAB_HTTP_PROXY"
+    export https_proxy="$FAB_HTTP_PROXY"
+fi
+
+echo y | turnkey-composer create-project elgg/starter-project:dev-master $WEBROOT
+cd "$WEBROOT"
 turnkey-composer install
 turnkey-composer install # 2nd run is req'd apparently...
 
-cp "$ELGG_ROOT"/vendor/elgg/elgg/elgg-config/settings.example.php "$ELGG_CONF"
-sed -i "s|{{timezone}}|UTC|" "$ELGG_CONF"
-sed -i "s|{{dataroot}}|$ELGG_DATA|" "$ELGG_CONF"
-sed -i "s|{{wwwroot}}|https://$DOMAIN/|" "$ELGG_CONF"
-sed -i "s|{{dbuser}}|$DB_USER|" "$ELGG_CONF"
-sed -i "s|{{dbpassword}}|$DB_PASS|" "$ELGG_CONF"
-sed -i "s|{{dbname}}|$DB_NAME|" "$ELGG_CONF"
-sed -i "s|{{dbhost}}|localhost|" "$ELGG_CONF"
-sed -i "s|{{dbport}}|3306|" "$ELGG_CONF"
-sed -i "s|{{dbprefix}}|elgg_|" "$ELGG_CONF"
+cat > /tmp/install.php <<EOF
+<?php
+  return array(
+    "timezone" => "UTC",
+    "dataroot" => "$ELGG_DATA",
+    "wwwroot" => "https://$DOMAIN/",
+    "dbuser" => "$DB_USER",
+    "dbpassword" => "$DB_PASS",
+    "dbname" => "$DB_NAME",
+    "dbhost" => "localhost",
+    "dbport" => "3306",
+    "dbprefix" => "elgg_",
+    "sitename" => "TurnKey Elgg",
+    "siteemail" => "$ADMIN_EMAIL",
+    "displayname" => "Administrator",
+    "email" => "$ADMIN_EMAIL",
+    "username" => "$ADMIN_NAME",
+    "password" => "$ADMIN_PASS"
+  );
+?>
+EOF
 
 # configure apache
 a2dissite 000-default
@@ -53,44 +61,17 @@ service apache2 start
 
 # setup the database
 MYSQL_BATCH="mysql --batch --execute"
-#MYSQL_ADMIN="mysqladmin --user=root --password=$MYSQL_PASS"
 
 mysqladmin  create $DB_NAME
 $MYSQL_BATCH "grant all privileges on $DB_NAME.* to $DB_USER@localhost identified by '$DB_PASS'; flush privileges;"
 $MYSQL_BATCH "INSTALL SONAME 'ha_archive';"
 
-exit 1
-
 # cli based installation
-turnkey-elgg-cli install --config "$ELGG_CONF"
+turnkey-elgg-cli install --config /tmp/install.php
+rm /tmp/install.php
 
-#rm $WEBROOT/.htaccess
-#chown -R www-data:www-data $WEBROOT
-#chown -R www-data:www-data $ELGG_DATA
-#INSTALLER=$ELGG_ROOT/install/cli/sample_installer.php
-
-# site settings
-#sed -i "s|'sitename'.*|'sitename' => 'TurnKey Elgg',|" $INSTALLER
-#sed -i "s|'siteemail'.*|'siteemail' => '$ADMIN_MAIL',|" $INSTALLER
-#sed -i "s|'wwwroot'.*|'wwwroot' => 'https://$DOMAIN',|" $INSTALLER
-#sed -i "s|'dataroot'.*|'dataroot' => '$ELGG_DATA',|" $INSTALLER
-
-# admin settings
-#sed -i "s|'displayname'.*|'displayname' => 'Administrator',|" $INSTALLER
-#sed -i "s|'email'.*|'email' => '$ADMIN_MAIL',|" $INSTALLER
-#sed -i "s|'username'.*|'username' => '$ADMIN_NAME',|" $INSTALLER
-#sed -i "s|'password'.*|'password' => '$ADMIN_PASS',|" $INSTALLER
-
-#sed -i "s|\$enabled = false;|\$enabled = true;|" $INSTALLER
-
-#su -s /bin/sh -c "php $INSTALLER" www-data
-#rm $INSTALLER
-
-#sed -i 's/{{timezone}}/UTC/' $WEBROOT/elgg-config/settings.php
-
-#chown -R root:root $WEBROOT
-#chown -R root:root $ELGG_ROOT
-#chmod 644 $WEBROOT/elgg-config/settings.php
+chown -R root:root $WEBROOT
+chmod 644 $WEBROOT/elgg-config/settings.php
 
 # add TurnKey credit
 
@@ -104,8 +85,10 @@ sed -i "s|^ \\+\\(elgg_register_ajax_view('navigation/menu/user_hover/contents')
         )));\n\
 \n\
         \1|" \
-"$ELGG_ROOT"/engine/lib/navigation.php
+"$WEBROOT"/vendor/elgg/elgg/engine/lib/navigation.php
 
 # stop services
 service mysql stop
 service apache2 stop
+
+unset http_proxy https_proxy
