@@ -74,7 +74,7 @@ chown -R root:root $WEBROOT
 chmod 644 $WEBROOT/elgg-config/settings.php
 
 # add TurnKey credit
-
+# currently not working - see https://github.com/turnkeylinux/tracker/issues/1906
 sed -i "s|^ \\+\\(elgg_register_ajax_view('navigation/menu/user_hover/contents');\\)$|\
         elgg_register_menu_item('footer', \\ElggMenuItem::factory(array(\n\
                 'name' => 'tklpowered',\n\
