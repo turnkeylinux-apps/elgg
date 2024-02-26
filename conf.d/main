@@ -1,30 +1,53 @@
-#!/bin/sh -ex
+#!/bin/bash -ex
 
 DB_NAME=elgg
 DB_USER=elgg
 DB_PASS=$(mcookie)
 
-ADMIN_NAME=admin
-ADMIN_PASS=turnkey
-ADMIN_MAIL=admin@example.com
-DOMAIN=www.example.com
+ADMIN_NAME="admin"
+ADMIN_PASS="turnkey"
+ADMIN_EMAIL="admin@example.com"
+DOMAIN="www.example.com"
 
-SRC=/usr/local/src
 WEBROOT=/var/www/elgg
+ELGG_DATA=$(dirname $WEBROOT)/elgg-data
 
-ELGG_ROOT=/var/www/elgg/vendor/elgg/elgg
 
-ELGG_DATA=/var/lib/elgg/data
+mkdir -p "$ELGG_DATA"
+mkdir -p "$(dirname "$WEBROOT")"/.composer
+chown -R www-data:www-data "$(dirname "$WEBROOT")"
 
-# unpack and set permissions
-unzip $SRC/elgg-*.zip -d $(dirname $WEBROOT)
-rm $SRC/elgg-*.zip
-mv $(dirname $WEBROOT)/elgg-* $WEBROOT
-chown -R root:root $WEBROOT
+if [[ -n "$FAB_HTTP_PROXY" ]]; then
+    export http_proxy="$FAB_HTTP_PROXY"
+    export https_proxy="$FAB_HTTP_PROXY"
+fi
 
-# setup elgg data directory
-mkdir -p $ELGG_DATA
-chown -R www-data:www-data $ELGG_DATA
+echo y | turnkey-composer create-project elgg/starter-project:dev-master $WEBROOT
+cd "$WEBROOT"
+turnkey-composer install
+turnkey-composer install # 2nd run is req'd apparently...
+
+cat > /tmp/install.php <<EOF
+<?php
+  return array(
+    "timezone" => "UTC",
+    "dataroot" => "$ELGG_DATA",
+    "wwwroot" => "https://$DOMAIN/",
+    "dbuser" => "$DB_USER",
+    "dbpassword" => "$DB_PASS",
+    "dbname" => "$DB_NAME",
+    "dbhost" => "localhost",
+    "dbport" => "3306",
+    "dbprefix" => "elgg_",
+    "sitename" => "TurnKey Elgg",
+    "siteemail" => "$ADMIN_EMAIL",
+    "displayname" => "Administrator",
+    "email" => "$ADMIN_EMAIL",
+    "username" => "$ADMIN_NAME",
+    "password" => "$ADMIN_PASS"
+  );
+?>
+EOF
 
 # configure apache
 a2dissite 000-default
@@ -37,62 +60,35 @@ service mysql start
 service apache2 start
 
 # setup the database
-MYSQL_BATCH="mysql --user=root --password=$MYSQL_PASS --batch"
-MYSQL_ADMIN="mysqladmin --user=root --password=$MYSQL_PASS"
+MYSQL_BATCH="mysql --batch --execute"
 
-$MYSQL_ADMIN create $DB_NAME
-$MYSQL_BATCH --execute "grant all privileges on $DB_NAME.* to $DB_USER@localhost identified by '$DB_PASS'; flush privileges;"
-$MYSQL_BATCH --execute "INSTALL SONAME 'ha_archive';"
+mysqladmin  create $DB_NAME
+$MYSQL_BATCH "grant all privileges on $DB_NAME.* to $DB_USER@localhost identified by '$DB_PASS'; flush privileges;"
+$MYSQL_BATCH "INSTALL SONAME 'ha_archive';"
 
 # cli based installation
-rm $WEBROOT/.htaccess
-chown -R www-data:www-data $WEBROOT
-chown -R www-data:www-data $ELGG_DATA
-INSTALLER=$ELGG_ROOT/install/cli/sample_installer.php
-
-# database settings
-sed -i "s|'dbuser'.*|'dbuser' => '$DB_USER',|" $INSTALLER
-sed -i "s|'dbpassword'.*|'dbpassword' => '$DB_PASS',|" $INSTALLER
-sed -i "s|'dbname'.*|'dbname' => '$DB_NAME',|" $INSTALLER
-
-# site settings
-sed -i "s|'sitename'.*|'sitename' => 'TurnKey Elgg',|" $INSTALLER
-sed -i "s|'siteemail'.*|'siteemail' => '$ADMIN_MAIL',|" $INSTALLER
-sed -i "s|'wwwroot'.*|'wwwroot' => 'https://$DOMAIN',|" $INSTALLER
-sed -i "s|'dataroot'.*|'dataroot' => '$ELGG_DATA',|" $INSTALLER
-
-# admin settings
-sed -i "s|'displayname'.*|'displayname' => 'Administrator',|" $INSTALLER
-sed -i "s|'email'.*|'email' => '$ADMIN_MAIL',|" $INSTALLER
-sed -i "s|'username'.*|'username' => '$ADMIN_NAME',|" $INSTALLER
-sed -i "s|'password'.*|'password' => '$ADMIN_PASS',|" $INSTALLER
-
-sed -i "s|\$enabled = false;|\$enabled = true;|" $INSTALLER
-
-su -s /bin/sh -c "php $INSTALLER" www-data
-rm $INSTALLER
-
-sed -i 's/{{timezone}}/UTC/' $WEBROOT/elgg-config/settings.php
+turnkey-elgg-cli install --config /tmp/install.php
+rm /tmp/install.php
 
 chown -R root:root $WEBROOT
-chown -R root:root $ELGG_ROOT
 chmod 644 $WEBROOT/elgg-config/settings.php
 
 # add TurnKey credit
-
+# currently not working - see https://github.com/turnkeylinux/tracker/issues/1906
 sed -i "s|^ \\+\\(elgg_register_ajax_view('navigation/menu/user_hover/contents');\\)$|\
         elgg_register_menu_item('footer', \\ElggMenuItem::factory(array(\n\
                 'name' => 'tklpowered',\n\
                 'text' => 'Powered by TurnKey Linux',\n\
-                'href' => 'http://turnkeylinux.org',\n\
+                'href' => 'https://turnkeylinux.org',\n\
                 'title' => 'TurnKey Linux',\n\
                 'section' => 'meta',\n\
         )));\n\
 \n\
         \1|" \
-$ELGG_ROOT/engine/lib/navigation.php
+"$WEBROOT"/vendor/elgg/elgg/engine/lib/navigation.php
 
 # stop services
 service mysql stop
 service apache2 stop
 
+unset http_proxy https_proxy

@@ -3,6 +3,6 @@
 
 . /etc/default/inithooks
 
-[ -e $INITHOOKS_CONF ] && . $INITHOOKS_CONF
-$INITHOOKS_PATH/bin/elgg.py --pass="$APP_PASS" --email="$APP_EMAIL" --domain="$APP_DOMAIN"
-
+[[ -e "$INITHOOKS_CONF" ]] && . "$INITHOOKS_CONF"
+$INITHOOKS_PATH/bin/elgg.py --pass="$APP_PASS" --email="$APP_EMAIL" \
+                            --domain="$APP_DOMAIN"
