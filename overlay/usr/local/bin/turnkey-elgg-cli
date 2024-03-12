@@ -50,4 +50,4 @@ EOF
     exit 1
 fi
 
-runuser "$ELGG_USER" -s /bin/bash -c "$ELGG_CLI $(printf '%q ' "$@")"
+/usr/sbin/runuser "$ELGG_USER" -s /bin/bash -c "$ELGG_CLI $(printf '%q ' "$@")"

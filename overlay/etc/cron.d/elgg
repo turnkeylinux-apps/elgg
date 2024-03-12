@@ -1,4 +1,4 @@
 # Taken from https://learn.elgg.org/en/stable/admin/cron.html
 # Leverages TurnKey provided elgg-cli wrapper
 
-* * * * * /usr/local/bin/turnkey-elgg-cli cron -q
+* * * * * root /usr/local/bin/turnkey-elgg-cli cron -q

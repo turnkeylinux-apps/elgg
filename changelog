@@ -2,7 +2,12 @@ turnkey-elgg-18.0 (1) turnkey; urgency=low
 
   * Update Elgg to latest upstream - v5.1.4.
 
-  * Switch Ellg install method to git/composer - easier upgrades.
+  * Switch Elgg install method to git/composer - easier upgrades.
+
+  * Include turnkey-elgg-cli helper script (runs elgg/vendor/bin/elgg-cli as
+    webserver user).
+
+  * Update cron job to use elgg-cli (via turnkey-elgg-cli).
 
   * Confconsole: bugfix broken DNS-01 Let's Encrypt challenge- closes #1876 &
     #1895.
@@ -100,7 +105,7 @@ turnkey-elgg-18.0 (1) turnkey; urgency=low
 
   * Use MariaDB (MySQL replacement) v10.11.3 (from debian repos).
 
- -- Jeremy Davis <jeremy@turnkeylinux.org>  Mon, 26 Feb 2024 22:36:26 +0000
+ -- Jeremy Davis <jeremy@turnkeylinux.org>  Tue, 12 Mar 2024 21:28:47 +0000
 
 turnkey-elgg-17.1 (1) turnkey; urgency=low
 
