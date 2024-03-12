@@ -53,6 +53,7 @@ a2dissite 000-default
 a2enmod headers
 a2ensite elgg
 a2enmod rewrite
+a2enmod cache
 
 # start services
 service mysql start
