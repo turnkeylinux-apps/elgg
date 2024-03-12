@@ -14,7 +14,7 @@ ELGG_DATA="$(dirname "$WEBROOT")/elgg-data"
 
 mkdir -p "$ELGG_DATA"
 mkdir -p "$(dirname "$WEBROOT")"/.composer
-chown -R www-data:www-data "$ELGG_DATA"
+chown -R www-data:www-data $(dirname "$WEBROOT")
 
 if [[ -n "$FAB_HTTP_PROXY" ]]; then
     export http_proxy="$FAB_HTTP_PROXY"
