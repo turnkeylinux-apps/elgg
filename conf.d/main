@@ -9,13 +9,12 @@ ADMIN_PASS="turnkey"
 ADMIN_EMAIL="admin@example.com"
 DOMAIN="www.example.com"
 
-WEBROOT=/var/www/elgg
-ELGG_DATA=$(dirname $WEBROOT)/elgg-data
-
+WEBROOT="/var/www/elgg"
+ELGG_DATA="$(dirname "$WEBROOT")/elgg-data"
 
 mkdir -p "$ELGG_DATA"
 mkdir -p "$(dirname "$WEBROOT")"/.composer
-chown -R www-data:www-data "$(dirname "$WEBROOT")"
+chown -R www-data:www-data $(dirname "$WEBROOT")
 
 if [[ -n "$FAB_HTTP_PROXY" ]]; then
     export http_proxy="$FAB_HTTP_PROXY"
@@ -54,6 +53,7 @@ a2dissite 000-default
 a2enmod headers
 a2ensite elgg
 a2enmod rewrite
+a2enmod cache
 
 # start services
 service mysql start
@@ -69,6 +69,11 @@ $MYSQL_BATCH "INSTALL SONAME 'ha_archive';"
 # cli based installation
 turnkey-elgg-cli install --config /tmp/install.php
 rm /tmp/install.php
+
+sed -i 's/{{timezone}}/UTC/' $WEBROOT/elgg-config/settings.php
+
+# enable simplecache by default
+sed -Ei "\|$CONFIG->simplecache_enabled| s|^//(.*)=.*|\1= true;|" $WEBROOT/elgg-config/settings.php
 
 chown -R root:root $WEBROOT
 chmod 644 $WEBROOT/elgg-config/settings.php
