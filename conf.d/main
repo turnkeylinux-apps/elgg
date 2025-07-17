@@ -14,7 +14,7 @@ ELGG_DATA="$(dirname "$WEBROOT")/elgg-data"
 
 mkdir -p "$ELGG_DATA"
 mkdir -p "$(dirname "$WEBROOT")"/.composer
-chown -R www-data:www-data $(dirname "$WEBROOT")
+chown -R www-data:www-data "$(dirname "$WEBROOT")"
 
 if [[ -n "$FAB_HTTP_PROXY" ]]; then
     export http_proxy="$FAB_HTTP_PROXY"
@@ -54,6 +54,7 @@ a2enmod headers
 a2ensite elgg
 a2enmod rewrite
 a2enmod cache
+a2enmod expires
 
 # start services
 service mysql start
