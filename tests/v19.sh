@@ -96,8 +96,9 @@ mariadb --batch --skip-column-names elgg --execute \
     grep -Fxq 2
 
 turnkey-elgg-cli cron -q
-dpkg-query -W php8.4 php8.4-intl mariadb-server webmin-apache \
+dpkg-query -W php-cli php-intl mariadb-server webmin-apache \
     webmin-mysql >/dev/null
+php -r 'exit(PHP_VERSION_ID >= 80400 && extension_loaded("intl") ? 0 : 1);'
 curl --insecure --fail --silent --show-error --head \
     https://127.0.0.1:12321/ >/dev/null
 ss -ltn | grep -Eq '127\.0\.0\.1:25[[:space:]]'
