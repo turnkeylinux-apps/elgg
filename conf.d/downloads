@@ -1,0 +1,13 @@
+#!/bin/bash
+set -Eeuxo pipefail
+
+url=https://github.com/Elgg/Elgg/releases/download/7.0.5/elgg-7.0.5.zip
+archive=/usr/local/src/elgg-7.0.5.zip
+sha256=a369a5b97c22e31998d7ed3e107c410efbcd1d8f3a3edacea4b64af8a3027c10
+proxy=()
+
+if [[ -n ${FAB_HTTP_PROXY:-} ]]; then
+    proxy=(--proxy "$FAB_HTTP_PROXY")
+fi
+curl --fail --location "${proxy[@]}" "$url" --output "$archive"
+printf '%s  %s\n' "$sha256" "$archive" | sha256sum --check -
