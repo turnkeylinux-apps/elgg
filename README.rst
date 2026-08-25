@@ -43,16 +43,43 @@ Notes:
     support@turnkeylinux.org
   - free users can access community support via the `TurnKey forums`_
 
-To update, first create a TKLBAM or equivalent backup of the database, data
-directory and application files. Review the release notes and the official
-`Elgg upgrade documentation`_, then select the compatible Elgg 7 release:
+To update, first create a TKLBAM or equivalent backup of the database,
+``/var/www/elgg-data`` and application files. Review the release notes and the
+official `Elgg upgrade documentation`_, then select a compatible Elgg 7
+complete release. Record its asset URL and published SHA-256 digest from the
+official release before downloading it. For example, after setting ``version``
+and ``sha256`` to those reviewed values:
 
-    cd /var/www/elgg
-    turnkey-composer --with-all-dependencies require elgg/elgg:~7.0.5
+    version=7.0.5
+    sha256=a369a5b97c22e31998d7ed3e107c410efbcd1d8f3a3edacea4b64af8a3027c10
+    archive=/tmp/elgg-$version.zip
+    staging=/var/www/elgg-$version
+    curl --fail --location \
+        https://github.com/Elgg/Elgg/releases/download/$version/elgg-$version.zip \
+        --output $archive
+    printf '%s  %s\n' "$sha256" "$archive" | sha256sum --check -
+    unzip -q $archive -d /tmp/elgg-release
+    mv /tmp/elgg-release/elgg-$version $staging
+    cp -a /var/www/elgg/elgg-config/settings.php \
+        $staging/elgg-config/settings.php
+
+Copy each site-specific plugin and reapply any recorded application
+customizations to ``$staging`` before the replacement. The database and
+``/var/www/elgg-data`` remain in place. Then replace the application tree and
+run Elgg's database upgrade:
+
+    systemctl stop apache2
+    mv /var/www/elgg /var/www/elgg.previous
+    mv $staging /var/www/elgg
+    chown -R root:root /var/www/elgg
+    chown -R www-data:www-data /var/www/elgg-data
+    chmod 644 /var/www/elgg/elgg-config/settings.php
+    systemctl start apache2
     turnkey-elgg-cli upgrade async -v
 
-Adjust the version constraint only after reviewing its PHP requirements and
-upgrade notes.
+Keep ``/var/www/elgg.previous`` until the site has been checked. The complete
+release is the application package, so it must be replaced as a unit rather
+than updated by requiring ``elgg/elgg`` from its own Composer project.
 
 .. _Elgg: https://www.elgg.org/
 .. _TurnKey Core: https://www.turnkeylinux.org/core

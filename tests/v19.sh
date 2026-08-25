@@ -103,19 +103,24 @@ curl --insecure --fail --silent --show-error --head \
     https://127.0.0.1:12321/ >/dev/null
 ss -ltn | grep -Eq '127\.0\.0\.1:25[[:space:]]'
 
-latest_tag=$(curl --fail --silent --show-error \
-    https://api.github.com/repos/Elgg/Elgg/releases/latest |
-    sed -n 's/.*"tag_name": "\([^"]*\)".*/\1/p' | head -n1)
-test -n "$latest_tag"
+release_metadata=/tmp/tkl-elgg-release.$$
+curl --fail --silent --show-error \
+    "https://api.github.com/repos/Elgg/Elgg/releases/tags/$installed_version" \
+    >"$release_metadata"
+grep -Fq '"tag_name": "7.0.5"' "$release_metadata"
+grep -Fq '"name": "elgg-7.0.5.zip"' "$release_metadata"
+grep -Fq '"digest": "sha256:a369a5b97c22e31998d7ed3e107c410efbcd1d8f3a3edacea4b64af8a3027c10"' \
+    "$release_metadata"
+rm -f "$release_metadata"
 grep -Rqs '^Suites: trixie' /etc/apt/sources.list.d
 ! grep -Rqi bookworm /etc/apt/sources.list.d
 
 cat >"$result" <<EOF
 package_source=Debian 13 Trixie PHP, MariaDB and Apache packages; official complete Elgg 7.0.5 release archive
 installed_version=Elgg $installed_version; PHP $(php -r 'echo PHP_VERSION;')
-runtime_checks=normal init; Apache TLS; firstboot administrator web login; authenticated blog create and read; MariaDB user and password state; Elgg cron; Webmin and local Postfix
-updater_command=turnkey-composer --with-all-dependencies require elgg/elgg:REVIEWED_VERSION followed by turnkey-elgg-cli upgrade async -v
-updater_result=official latest release endpoint returned $latest_tag
-updater_channel=official Elgg GitHub releases and Composer package metadata
+runtime_checks=normal init; Apache TLS; firstboot administrator web login; authenticated blog create and read with direct MariaDB persistence; MariaDB user and password state; Elgg cron; Webmin and local Postfix
+updater_command=supervised official complete-release replacement retaining the database, /var/www/elgg-data, settings.php and site customizations; restore root:root application and www-data:www-data data ownership; run turnkey-elgg-cli upgrade async -v
+updater_result=official selected release tag $installed_version publishes the expected complete asset and SHA-256 digest
+updater_channel=official Elgg GitHub complete releases
 integrity_evidence=build verifies the upstream-published Elgg 7.0.5 archive SHA-256 a369a5b97c22e31998d7ed3e107c410efbcd1d8f3a3edacea4b64af8a3027c10; the complete release includes its resolved dependencies and Composer lock; Debian metadata is signed; no Bookworm source remained
 EOF
