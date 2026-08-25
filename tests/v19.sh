@@ -89,7 +89,11 @@ grep -Fq 'Created through the Elgg web interface' "$page"
 password_hash=$(mariadb --batch --skip-column-names elgg --execute \
     "SELECT value FROM elgg_metadata WHERE entity_guid=$admin_guid AND name='password_hash'")
 [[ $password_hash == '$2'* ]]
-test "$(mariadb --batch --skip-column-names elgg --execute 'SHOW TABLES' | wc -l)" -ge 20
+mariadb --batch --skip-column-names elgg --execute \
+    "SELECT COUNT(*) FROM elgg_metadata
+     WHERE (name='title' AND value='TurnKey v19 acceptance post')
+        OR (name='description' AND value='Created through the Elgg web interface')" |
+    grep -Fxq 2
 
 turnkey-elgg-cli cron -q
 dpkg-query -W php8.4 php8.4-intl mariadb-server webmin-apache \
