@@ -1,3 +1,16 @@
+turnkey-elgg-19.0 (1) turnkey; urgency=low
+
+  * Upgrade Elgg to maintained upstream release 7.0.5 on PHP 8.4.
+
+  * Verify the official complete release archive using its upstream-published
+    SHA-256 digest.
+
+  * Update MariaDB and Apache configuration for Debian 13/Trixie.
+
+  * See the TurnKey Core 19.0 changelog for changes common to all appliances.
+
+ -- TurnKey Linux release engineering <release@turnkeylinux.org>  Tue, 25 Aug 2026 00:00:00 +0000
+
 turnkey-elgg-18.0 (1) turnkey; urgency=low
 
   * Update Elgg to latest upstream - v5.1.4.
@@ -318,4 +331,3 @@ turnkey-elgg-12.0 (1) turnkey; urgency=low
     appliances. Here we only describe changes specific to this appliance.
 
  -- Alon Swartz <alon@turnkeylinux.org>  Wed, 01 Aug 2012 08:00:00 +0200
-

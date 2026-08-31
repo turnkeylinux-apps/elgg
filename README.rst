@@ -12,7 +12,9 @@ and on top of that:
 
 - Elgg configurations:
    
-   - Installed from upstream source code to /var/www/elgg
+   - Elgg 7.0.5 is installed from the official complete release archive to
+     /var/www/elgg. The upstream-published SHA-256 digest is verified during
+     the build.
 
 - SSL support out of the box.
 - `Adminer`_ administration frontend for MySQL (listening on port
@@ -36,32 +38,52 @@ Notes:
 - Elgg will not be automatically updated and must be updated manually as per
   the instructions below.
 - AWS Marketplace users will need to prefix most commands with 'sudo'.
-- when running the 'composer' commands you will see a warning regarding
-  running as 'root'. Hit enter to accept. Running as root is required because
-  as a security measure, Elgg is "locked down" and only writeable by root.
 - If you have any problems please contact TurnKey support:
   - paying users can contact TurnKey support via the `TurnKey Hub`_ or
     support@turnkeylinux.org
   - free users can access community support via the `TurnKey forums`_
 
-Steps to update:
-1. create backup of your Elgg site - using TKLBAM or some other method.
-2. log into a terminal of your server as the 'root' user ('admin' on AWS
-   Marketplace server)
-3. The commands below will need to be adjusted depending on which TurnKey
-   Elgg appliance you are running. These explictly apply to v18.x and
-   demonstrate upgrading Elgg to v6.2.3 on:
+To update, first create a TKLBAM or equivalent backup of the database,
+``/var/www/elgg-data`` and application files. Review the release notes and the
+official `Elgg upgrade documentation`_, then select a compatible Elgg 7
+complete release. Record its asset URL and published SHA-256 digest from the
+official release before downloading it. For example, after setting ``version``
+and ``sha256`` to those reviewed values:
 
-    cd /var/www/elgg
-    # this is only required the first time you update
-    sed -En '/"php"/ s|(.*)8.0(.*)|\18.2\2|p' composer.json
-    composer --with-all-dependencies -vv require elgg/elgg:~6.2.3
-    # adjust the above Elgg version to upgrade to newer version.
-    composer update -vv
-    ./vendor/bin/elgg-cli upgrade async -v
+    version=7.0.5
+    sha256=a369a5b97c22e31998d7ed3e107c410efbcd1d8f3a3edacea4b64af8a3027c10
+    archive=/tmp/elgg-$version.zip
+    staging=/var/www/elgg-$version
+    curl --fail --location \
+        https://github.com/Elgg/Elgg/releases/download/$version/elgg-$version.zip \
+        --output $archive
+    printf '%s  %s\n' "$sha256" "$archive" | sha256sum --check -
+    unzip -q $archive -d /tmp/elgg-release
+    mv /tmp/elgg-release/elgg-$version $staging
+    cp -a /var/www/elgg/elgg-config/settings.php \
+        $staging/elgg-config/settings.php
+
+Copy each site-specific plugin and reapply any recorded application
+customizations to ``$staging`` before the replacement. The database and
+``/var/www/elgg-data`` remain in place. Then replace the application tree and
+run Elgg's database upgrade:
+
+    systemctl stop apache2
+    mv /var/www/elgg /var/www/elgg.previous
+    mv $staging /var/www/elgg
+    chown -R root:root /var/www/elgg
+    chown -R www-data:www-data /var/www/elgg-data
+    chmod 644 /var/www/elgg/elgg-config/settings.php
+    systemctl start apache2
+    turnkey-elgg-cli upgrade async -v
+
+Keep ``/var/www/elgg.previous`` until the site has been checked. The complete
+release is the application package, so it must be replaced as a unit rather
+than updated by requiring ``elgg/elgg`` from its own Composer project.
 
 .. _Elgg: https://www.elgg.org/
 .. _TurnKey Core: https://www.turnkeylinux.org/core
 .. _Adminer: https://www.adminer.org/
 .. _TurnKey Hub: https://hub.turnkeylinux.org/
 .. _TurnKey forums: https://www.turnkeylinux.org/forum/
+.. _Elgg upgrade documentation: https://learn.elgg.org/en/stable/admin/upgrading.html
